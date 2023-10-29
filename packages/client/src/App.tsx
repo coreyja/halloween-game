@@ -27,7 +27,7 @@ function App() {
 
   const OptionButton = ({ option }) => (
     <button
-      className="block bg-orange-300 rounded px-16 py-4 my-6"
+      className={`block rounded px-16 py-4 my-6 ${option.chosen ? "bg-orange-500" : "bg-orange-300"}`}
       onClick={() => {
         mutate(option.content);
       }}

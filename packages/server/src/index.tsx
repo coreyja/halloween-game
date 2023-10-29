@@ -7,7 +7,7 @@ import { initialStory } from "../prompts/initial_story";
 
 interface GameOption {
   content: string;
-  votes: number;
+  votes: number[];
 }
 
 interface GameState {
@@ -48,7 +48,7 @@ const createNewStory = async () => {
     const parsedContent = parse(content);
     const gameOptions = parsedContent.options.map((option) => ({
       content: option,
-      votes: 0,
+      votes: [],
     }));
     state.game = {
       currentStory: parsedContent.story,
@@ -61,7 +61,11 @@ const createNewStory = async () => {
 
 createNewStory();
 
-const app = new Elysia()
+const app = new Elysia({
+  cookie: {
+      secrets: 'Fischl von Luftschloss Narfidort',
+  }
+})
   .use(html())
   .use(staticPlugin({ assets: "../client/out", prefix: "/" }))
   .use(
@@ -73,32 +77,45 @@ const app = new Elysia()
       },
     }),
   )
-  .get("/", () => (
-    <html lang="en">
-      <head>
-        <title>coreyja - Halloween Game</title>
+  .get(
+    "/",
+    ({ cookie: { profile } }) => {
+      profile.value = profile?.value || { id: Math.random() }
 
-        <script src="/index.js"></script>
-        <link rel="stylesheet" href="/index.css" />
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
-      </head>
-      <body>
-        <div id="react-root"></div>
-      </body>
-    </html>
-  ))
-  .get("/api/game_state", () => state.game)
+      return (
+      <html lang="en">
+        <head>
+          <title>coreyja - Halloween Game</title>
+
+          <script src="/index.js"></script>
+          <link rel="stylesheet" href="/index.css" />
+          <meta name="viewport" content="width=device-width, initial-scale=1" />
+        </head>
+        <body>
+          <div id="react-root"></div>
+        </body>
+      </html>
+    )},
+  )
+  .get("/api/game_state", ({ cookie: {profile}}) => ({...state.game, options: state.game?.options.map(o => ({...o, votes: o.votes.length, chosen: o.votes.includes(profile?.value?.id)}))}))
   .post(
     "/api/vote",
-    (req) => {
-      const chosenOption = req.body.option;
+    ({ body, cookie: { profile }}) => {
 
-      const option = state.game?.options.find(
-        (option) => option.content === chosenOption,
+      const chosenOption = state.game?.options.find(
+        (option) => option.content === body.option,
+      );
+      const oldOption = state.game?.options.find(
+        (option) => option.votes.includes(profile.value.id),
       );
 
-      if (option) {
-        option.votes += 1;
+      if (oldOption) {
+        oldOption.votes = oldOption.votes.filter(
+          (vote) => vote !== profile.value.id,
+        );
+      }
+      if (chosenOption) {
+        chosenOption.votes.push(profile.value.id);
       }
     },
     { body: t.Object({ option: t.String() }) },
