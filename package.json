@@ -5,9 +5,11 @@
     "packages/*"
   ],
   "devDependencies": {
+    "@flydotio/dockerfile": "latest",
     "prettier": "^3.0.3"
   },
   "scripts": {
-    "format": "bun run prettier -w ."
+    "format": "bun run prettier -w .",
+    "start": "cd packages/client && bun bundle && cd ../server && bun run src/index.tsx"
   }
 }
