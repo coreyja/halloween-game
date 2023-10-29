@@ -13,6 +13,7 @@ function App() {
       const resp = await fetch("/api/game_state", {});
       return resp.data;
     },
+    refetchInterval: 250,
   });
 
   const { mutate } = useMutation({
