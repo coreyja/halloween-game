@@ -13,9 +13,12 @@
     "web-vitals": "^2.1.4"
   },
   "devDependencies": {
-    "@halloween/server": "workspace:*"
+    "@catppuccin/tailwindcss": "^0.1.6",
+    "@halloween/server": "workspace:*",
+    "tailwind": "^4.0.0"
   },
   "scripts": {
+    "tailwind": "bun run tailwindcss -i ./src/index.css -o ./out/index.css",
     "bundle": "bun build ./src/index.tsx --outdir out/",
     "dev": "bun bundle --watch"
   },

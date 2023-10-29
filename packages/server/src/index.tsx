@@ -8,12 +8,13 @@ const app = new Elysia()
   .get("/", () => (
     <html lang="en">
       <head>
-        <title>Hello World</title>
+        <title>coreyja - Halloween Game</title>
 
         <script src="/index.js"></script>
+        <link rel="stylesheet" href="/index.css" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
       </head>
       <body>
-        <h1>Hello World</h1>
         <div id="react-root"></div>
       </body>
     </html>
