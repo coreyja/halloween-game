@@ -1,4 +1,4 @@
-import { Elysia } from "elysia";
+import { Elysia, t } from "elysia";
 import { html } from "@elysiajs/html";
 import { staticPlugin } from "@elysiajs/static";
 

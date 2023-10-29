@@ -1,5 +1,7 @@
 import React from "react";
 
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+
 import ReactDOM from "react-dom/client";
 import "./index.css";
 import App from "./App";
@@ -10,9 +12,13 @@ document.addEventListener(
     const reactRoot = ReactDOM.createRoot(
       document.getElementById("react-root")!,
     );
+
+    const queryClient = new QueryClient();
     reactRoot.render(
       <React.StrictMode>
-        <App />
+        <QueryClientProvider client={queryClient}>
+          <App />
+        </QueryClientProvider>
       </React.StrictMode>,
     );
   },
