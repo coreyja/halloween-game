@@ -5,8 +5,6 @@ import "./App.css";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { fetch } from "./client";
 
-
-
 function App() {
   const queryClient = useQueryClient();
   const { data: game_state } = useQuery({
@@ -19,15 +17,20 @@ function App() {
 
   const { mutate } = useMutation({
     mutationFn: (option: string) => {
-      return fetch("/api/vote", { body: { option }, method: "POST" })
+      return fetch("/api/vote", { body: { option }, method: "POST" });
     },
     onSettled: () => {
-      queryClient.invalidateQueries({queryKey: ["game_state"]});
-    }
-  })
+      queryClient.invalidateQueries({ queryKey: ["game_state"] });
+    },
+  });
 
   const OptionButton = ({ option }) => (
-    <button className="block bg-orange-300 rounded px-16 py-4 my-6" onClick={() => {mutate(option.content)}}>
+    <button
+      className="block bg-orange-300 rounded px-16 py-4 my-6"
+      onClick={() => {
+        mutate(option.content);
+      }}
+    >
       {option.content} ({option.votes} votes)
     </button>
   );
