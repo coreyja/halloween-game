@@ -4,5 +4,10 @@
   "workspaces": [
     "packages/*"
   ],
-  "devDependencies": {}
+  "devDependencies": {
+    "prettier": "^3.0.3"
+  },
+  "scripts": {
+    "format": "bun run prettier -w ."
+  }
 }
