@@ -33,10 +33,7 @@ function App() {
     return <div>Loading...</div>;
   }
 
-  const nextStageAt = new Date(game_state.nextStageAt!);
-  const now = new Date();
-
-  const isOver = nextStageAt.getTime() < now.getTime();
+  const isOver = game_state.secondsLeft <= 0;
 
   const OptionButton = ({ option }) => (
     <button
@@ -56,7 +53,7 @@ function App() {
       <header className="App-header">
         <img src={logo} className="App-logo max-w-xs m-auto pt-2" alt="logo" />
         <p>
-          Time Left: <Countdown date={nextStageAt} />
+          Time Left: {Math.max(game_state.secondsLeft, 0)} seconds
         </p>
         <p className="px-6">{game_state.currentStory}</p>
 

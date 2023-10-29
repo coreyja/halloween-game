@@ -75,12 +75,13 @@ const createStoryInner = async (prompt: string) => {
 };
 
 const createStory = async (prompt: string) => {
-  while (true) {
-    try {
-      await createStoryInner(prompt);
-      return
-    } catch (e) {
-      console.error(e);
+  try {
+    await createStoryInner(prompt);
+  } catch (e) {
+    if (state.status == "generating_next") {
+      state.status = "waiting_for_votes";
+    } else if (state.status == "generating_initial") {
+      state.status = "start";
     }
   }
 };
@@ -97,25 +98,30 @@ const app = new Elysia({
       name: "heartbeat",
       pattern: "*/2 * * * * *",
       async run() {
-        console.log(state);
         if (state.status === "start") {
           state.status = "generating_initial";
+          console.log("Creating new story")
           await createNewStory();
         } else if (state.status === "waiting_for_votes") {
           const now = Date.now();
           const game = state.game!;
-          const isOver = game.nextStageAt.getTime() < now;
+          const isOver = (game.nextStageAt.getTime() - now) <= 0;
+
+          const secondsLeft = Math.floor((game.nextStageAt.getTime() - now) / 1000);
+          console.log(`Voting Seconds left: ${secondsLeft}`);
 
           if (isOver) {
             state.status = "generating_next";
             const winningOption = game.options.reduce((prev, current) =>
               prev.votes.length > current.votes.length ? prev : current,
             );
+            console.log("Generating next story with winning option: " + winningOption.content)
 
             const nextPrompt = nextStep({
               lastStory: game.currentStory,
               chosenOption: winningOption.content,
             });
+            console.log("Next prompt: " + nextPrompt)
             await createStory(nextPrompt);
           }
         }
@@ -142,6 +148,7 @@ const app = new Elysia({
   })
   .get("/api/game_state", ({ cookie: { profile } }) => ({
     ...state.game,
+    secondsLeft: -Math.floor((Date.now() - (state?.game?.nextStageAt?.getTime() || 0)) / 1000),
     options: state.game?.options.map((o) => ({
       ...o,
       votes: o.votes.length,
