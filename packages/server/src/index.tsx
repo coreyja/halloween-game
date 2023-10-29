@@ -5,31 +5,36 @@ import cron from "@elysiajs/cron";
 import OpenAI from "openai";
 import { initialStory } from "../prompts/initial_story";
 
-interface GameState {
-  currentStory: string;
-  options: string[];
+interface GameOption {
+  content: string;
+  votes: number;
 }
 
-const state: { game?: GameState } = { };
+interface GameState {
+  currentStory: string;
+  options: GameOption[];
+}
+
+const state: { game?: GameState } = {};
 
 const openai = new OpenAI({
   apiKey: process.env["OPENAI_KEY"],
 });
 
 const parse = (content: string) => {
-  console.debug(content)
-  
+  console.debug(content);
+
   const json = JSON.parse(content);
 
-  if (!json['story']) {
-    throw 'No story found'
+  if (!json["story"]) {
+    throw "No story found";
   }
-  if (!json['options']) {
-    throw 'No options found'
+  if (!json["options"]) {
+    throw "No options found";
   }
 
-  return json as { story: string, options: string[] }
-}
+  return json as { story: string; options: string[] };
+};
 
 const createNewStory = async () => {
   const chatCompletion = await openai.chat.completions.create({
@@ -41,16 +46,20 @@ const createNewStory = async () => {
 
   if (content) {
     const parsedContent = parse(content);
+    const gameOptions = parsedContent.options.map((option) => ({
+      content: option,
+      votes: 0,
+    }));
     state.game = {
       currentStory: parsedContent.story,
-      options: parsedContent.options,
-    }
+      options: gameOptions,
+    };
   }
 
   console.log(state);
-}
+};
 
-createNewStory()
+createNewStory();
 
 const app = new Elysia()
   .use(html())
@@ -60,7 +69,7 @@ const app = new Elysia()
       name: "heartbeat",
       pattern: "*/5 * * * *",
       async run() {
-        await createNewStory()
+        await createNewStory();
       },
     }),
   )
@@ -79,6 +88,21 @@ const app = new Elysia()
     </html>
   ))
   .get("/api/game_state", () => state.game)
+  .post(
+    "/api/vote",
+    (req) => {
+      const chosenOption = req.body.option;
+
+      const option = state.game?.options.find(
+        (option) => option.content === chosenOption,
+      );
+
+      if (option) {
+        option.votes += 1;
+      }
+    },
+    { body: t.Object({ option: t.String() }) },
+  )
   .listen(3000);
 
 console.log(

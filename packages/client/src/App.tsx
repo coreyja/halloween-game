@@ -2,14 +2,10 @@ import React, { FunctionComponent, useEffect } from "react";
 
 import logo from "./logo.png";
 import "./App.css";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { fetch } from "./client";
 
-const OptionButton = ({ title }) => (
-  <button className="block bg-orange-300 rounded px-16 py-4 my-6">
-    {title}
-  </button>
-);
+
 
 function App() {
   const queryClient = useQueryClient();
@@ -20,6 +16,21 @@ function App() {
       return resp.data;
     },
   });
+
+  const { mutate } = useMutation({
+    mutationFn: (option: string) => {
+      return fetch("/api/vote", { body: { option }, method: "POST" })
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({queryKey: ["game_state"]});
+    }
+  })
+
+  const OptionButton = ({ option }) => (
+    <button className="block bg-orange-300 rounded px-16 py-4 my-6" onClick={() => {mutate(option.content)}}>
+      {option.content} ({option.votes} votes)
+    </button>
+  );
 
   if (!game_state || !game_state.currentStory) {
     return <div>Loading...</div>;
@@ -33,7 +44,7 @@ function App() {
 
         <div className="flex flex-col items-center">
           {game_state.options.map((option, i) => (
-            <OptionButton key={i} title={option} />
+            <OptionButton key={i} option={option} />
           ))}
         </div>
       </header>
