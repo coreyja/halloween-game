@@ -4,6 +4,7 @@ import { staticPlugin } from "@elysiajs/static";
 import cron from "@elysiajs/cron";
 import OpenAI from "openai";
 import { initialStory } from "../prompts/initial_story";
+import { nextStep } from "../prompts/next_step";
 
 const ONE_MINUTE_IN_MILLIS = 1000 * 60;
 
@@ -18,7 +19,13 @@ interface GameState {
   options: GameOption[];
 }
 
-const state: { game?: GameState } = {};
+type States =
+  | "start"
+  | "generating_initial"
+  | "waiting_for_votes"
+  | "generating_next";
+
+const state: { game?: GameState; status: States } = { status: "start" };
 
 const openai = new OpenAI({
   apiKey: process.env["OPENAI_KEY"],
@@ -40,8 +47,12 @@ const parse = (content: string) => {
 };
 
 const createNewStory = async () => {
+  await createStory(initialStory());
+};
+
+const createStoryInner = async (prompt: string) => {
   const chatCompletion = await openai.chat.completions.create({
-    messages: [{ role: "system", content: initialStory() }],
+    messages: [{ role: "system", content: prompt }],
     model: "gpt-3.5-turbo",
   });
 
@@ -53,17 +64,26 @@ const createNewStory = async () => {
       content: option,
       votes: [],
     }));
+
     state.game = {
       currentStory: parsedContent.story,
       options: gameOptions,
       nextStageAt: new Date(Date.now() + ONE_MINUTE_IN_MILLIS),
     };
+    state.status = "waiting_for_votes";
   }
-
-  console.log(state);
 };
 
-createNewStory();
+const createStory = async (prompt: string) => {
+  while (true) {
+    try {
+      await createStoryInner(prompt);
+      return
+    } catch (e) {
+      console.error(e);
+    }
+  }
+};
 
 const app = new Elysia({
   cookie: {
@@ -75,9 +95,30 @@ const app = new Elysia({
   .use(
     cron({
       name: "heartbeat",
-      pattern: "*/5 * * * *",
+      pattern: "*/2 * * * * *",
       async run() {
-        await createNewStory();
+        console.log(state);
+        if (state.status === "start") {
+          state.status = "generating_initial";
+          await createNewStory();
+        } else if (state.status === "waiting_for_votes") {
+          const now = Date.now();
+          const game = state.game!;
+          const isOver = game.nextStageAt.getTime() < now;
+
+          if (isOver) {
+            state.status = "generating_next";
+            const winningOption = game.options.reduce((prev, current) =>
+              prev.votes.length > current.votes.length ? prev : current,
+            );
+
+            const nextPrompt = nextStep({
+              lastStory: game.currentStory,
+              chosenOption: winningOption.content,
+            });
+            await createStory(nextPrompt);
+          }
+        }
       },
     }),
   )

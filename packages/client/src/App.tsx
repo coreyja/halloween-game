@@ -27,19 +27,6 @@ function App() {
     },
   });
 
-  const OptionButton = ({ option }) => (
-    <button
-      className={`block rounded px-16 py-4 my-6 ${
-        option.chosen ? "bg-orange-500" : "bg-orange-300"
-      }`}
-      onClick={() => {
-        mutate(option.content);
-      }}
-    >
-      {option.content} ({option.votes} votes)
-    </button>
-  );
-
   const [secondsLeft, setSecondsLeft] = React.useState(undefined);
 
   if (!game_state || !game_state.currentStory || !game_state.options) {
@@ -51,6 +38,19 @@ function App() {
 
   const isOver = nextStageAt.getTime() < now.getTime();
 
+  const OptionButton = ({ option }) => (
+    <button
+      className={`block rounded px-16 py-4 my-6 ${
+        option.chosen ? "bg-orange-500" : "bg-orange-300"
+      }`}
+      onClick={() => {
+        mutate(option.content);
+      }}
+      disabled={isOver}
+    >
+      {option.content} ({option.votes} votes)
+    </button>
+  );
   return (
     <div className="App min-h-screen">
       <header className="App-header">
@@ -60,13 +60,11 @@ function App() {
         </p>
         <p className="px-6">{game_state.currentStory}</p>
 
-        {!isOver && (
-          <div className="flex flex-col items-center">
-            {game_state.options.map((option, i) => (
-              <OptionButton key={i} option={option} />
-            ))}
-          </div>
-        )}
+        <div className="flex flex-col items-center">
+          {game_state.options.map((option, i) => (
+            <OptionButton key={i} option={option} />
+          ))}
+        </div>
       </header>
     </div>
   );
