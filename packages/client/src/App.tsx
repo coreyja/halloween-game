@@ -6,6 +6,21 @@ import logo from "./logo.png";
 import "./App.css";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { fetch } from "./client";
+import { Logo } from "./CJALogo";
+
+const buttonColor = ({ chosen, isOver }) => {
+  let classes = [];
+
+  if (chosen) {
+    classes.push("bg-orange-500");
+  } else {
+    classes.push("bg-orange-300");
+  }
+  if (isOver) {
+    classes.push("opacity-50");
+  }
+  return classes.join(" ");
+};
 
 function App() {
   const queryClient = useQueryClient();
@@ -37,9 +52,10 @@ function App() {
 
   const OptionButton = ({ option }) => (
     <button
-      className={`block rounded px-16 py-4 my-6 ${
-        option.chosen ? "bg-orange-500" : "bg-orange-300"
-      }`}
+      className={`block rounded px-16 py-4 my-6 ${buttonColor({
+        chosen: option.chosen,
+        isOver,
+      })}`}
       onClick={() => {
         mutate(option.content);
       }}
@@ -50,19 +66,24 @@ function App() {
   );
   return (
     <div className="App min-h-screen">
-      <header className="App-header">
-        <img src={logo} className="App-logo max-w-xs m-auto pt-2" alt="logo" />
-        <p>
-          Time Left: {Math.max(game_state.secondsLeft, 0)} seconds
-        </p>
-        <p className="px-6">{game_state.currentStory}</p>
+      <img src={logo} className="App-logo max-w-xs m-auto pt-2" alt="logo" />
+      <p className="text-center py-8">
+        Time Left: {Math.max(game_state.secondsLeft, 0)} seconds
+      </p>
+      <p className="px-6">{game_state.currentStory}</p>
 
-        <div className="flex flex-col items-center">
-          {game_state.options.map((option, i) => (
-            <OptionButton key={i} option={option} />
-          ))}
-        </div>
-      </header>
+      <div className="flex flex-col items-center">
+        {game_state.options.map((option, i) => (
+          <OptionButton key={i} option={option} />
+        ))}
+      </div>
+
+      <div className="cja-branding mt-auto pt-24 text-center">
+        Created by <a href="https://coreyja.com">coreyja</a>
+        <a href="https://coreyja.com">
+          <Logo />
+        </a>
+      </div>
     </div>
   );
 }

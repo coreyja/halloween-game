@@ -100,14 +100,16 @@ const app = new Elysia({
       async run() {
         if (state.status === "start") {
           state.status = "generating_initial";
-          console.log("Creating new story")
+          console.log("Creating new story");
           await createNewStory();
         } else if (state.status === "waiting_for_votes") {
           const now = Date.now();
           const game = state.game!;
-          const isOver = (game.nextStageAt.getTime() - now) <= 0;
+          const isOver = game.nextStageAt.getTime() - now <= 0;
 
-          const secondsLeft = Math.floor((game.nextStageAt.getTime() - now) / 1000);
+          const secondsLeft = Math.floor(
+            (game.nextStageAt.getTime() - now) / 1000,
+          );
           console.log(`Voting Seconds left: ${secondsLeft}`);
 
           if (isOver) {
@@ -115,13 +117,16 @@ const app = new Elysia({
             const winningOption = game.options.reduce((prev, current) =>
               prev.votes.length > current.votes.length ? prev : current,
             );
-            console.log("Generating next story with winning option: " + winningOption.content)
+            console.log(
+              "Generating next story with winning option: " +
+                winningOption.content,
+            );
 
             const nextPrompt = nextStep({
               lastStory: game.currentStory,
               chosenOption: winningOption.content,
             });
-            console.log("Next prompt: " + nextPrompt)
+            console.log("Next prompt: " + nextPrompt);
             await createStory(nextPrompt);
           }
         }
@@ -148,7 +153,9 @@ const app = new Elysia({
   })
   .get("/api/game_state", ({ cookie: { profile } }) => ({
     ...state.game,
-    secondsLeft: -Math.floor((Date.now() - (state?.game?.nextStageAt?.getTime() || 0)) / 1000),
+    secondsLeft: -Math.floor(
+      (Date.now() - (state?.game?.nextStageAt?.getTime() || 0)) / 1000,
+    ),
     options: state.game?.options.map((o) => ({
       ...o,
       votes: o.votes.length,
