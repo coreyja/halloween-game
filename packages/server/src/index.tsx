@@ -5,6 +5,8 @@ import cron from "@elysiajs/cron";
 import OpenAI from "openai";
 import { initialStory } from "../prompts/initial_story";
 
+const ONE_MINUTE_IN_MILLIS = 1000 * 60;
+
 interface GameOption {
   content: string;
   votes: number[];
@@ -12,6 +14,7 @@ interface GameOption {
 
 interface GameState {
   currentStory: string;
+  nextStageAt: Date;
   options: GameOption[];
 }
 
@@ -53,6 +56,7 @@ const createNewStory = async () => {
     state.game = {
       currentStory: parsedContent.story,
       options: gameOptions,
+      nextStageAt: new Date(Date.now() + ONE_MINUTE_IN_MILLIS),
     };
   }
 
@@ -63,8 +67,8 @@ createNewStory();
 
 const app = new Elysia({
   cookie: {
-      secrets: 'Fischl von Luftschloss Narfidort',
-  }
+    secrets: "Fischl von Luftschloss Narfidort",
+  },
 })
   .use(html())
   .use(staticPlugin({ assets: "../client/out", prefix: "/" }))
@@ -77,12 +81,10 @@ const app = new Elysia({
       },
     }),
   )
-  .get(
-    "/",
-    ({ cookie: { profile } }) => {
-      profile.value = profile?.value || { id: Math.random() }
+  .get("/", ({ cookie: { profile } }) => {
+    profile.value = profile?.value || { id: Math.random() };
 
-      return (
+    return (
       <html lang="en">
         <head>
           <title>coreyja - Halloween Game</title>
@@ -95,18 +97,24 @@ const app = new Elysia({
           <div id="react-root"></div>
         </body>
       </html>
-    )},
-  )
-  .get("/api/game_state", ({ cookie: {profile}}) => ({...state.game, options: state.game?.options.map(o => ({...o, votes: o.votes.length, chosen: o.votes.includes(profile?.value?.id)}))}))
+    );
+  })
+  .get("/api/game_state", ({ cookie: { profile } }) => ({
+    ...state.game,
+    options: state.game?.options.map((o) => ({
+      ...o,
+      votes: o.votes.length,
+      chosen: o.votes.includes(profile?.value?.id),
+    })),
+  }))
   .post(
     "/api/vote",
-    ({ body, cookie: { profile }}) => {
-
+    ({ body, cookie: { profile } }) => {
       const chosenOption = state.game?.options.find(
         (option) => option.content === body.option,
       );
-      const oldOption = state.game?.options.find(
-        (option) => option.votes.includes(profile.value.id),
+      const oldOption = state.game?.options.find((option) =>
+        option.votes.includes(profile.value.id),
       );
 
       if (oldOption) {
