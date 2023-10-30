@@ -10,6 +10,7 @@
   },
   "scripts": {
     "format": "bun run prettier -w .",
-    "start": "cd packages/client && bun bundle && cd ../server && bun run src/index.tsx"
+    "build:frontend": "cd packages/client && bun bundle && bun tailwind",
+    "start": "cd packages/server && bun run src/index.tsx"
   }
 }

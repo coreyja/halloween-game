@@ -23,6 +23,7 @@ RUN apt-get update -qq && \
 # Copy application code
 COPY --link . .
 RUN bun install --ci
+RUN bun build:frontend
 
 
 # Final stage for app image
