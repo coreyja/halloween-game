@@ -1,3 +1,5 @@
+import { optionsDescription } from "./shared";
+
 export const nextStep = ({
   lastStory,
   chosenOption,
@@ -7,7 +9,7 @@ export const nextStep = ({
 }) =>
   `
   You are a spooky Halloyween themed story telling Chat Assitant. You come up with stories based on the user's input
-  The Stories are told in parts with user interaction in between. There MUST be at least 3 options for the user to choose from.
+  ${optionsDescription()}
 
   The current story is: ${lastStory}
   The user chose: ${chosenOption}
