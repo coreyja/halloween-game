@@ -16,10 +16,6 @@ ENV NODE_ENV="production"
 # Throw-away build stage to reduce size of final image
 FROM base as build
 
-# Install packages needed to build node modules
-RUN apt-get update -qq && \
-    apt-get install -y build-essential pkg-config python
-
 # Copy application code
 COPY --link . .
 RUN bun install --ci
